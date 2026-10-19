@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface CodeViewProps {
   code: string;
+  isStreaming?: boolean;
 }
 
-export function CodeView({ code }: CodeViewProps) {
+export function CodeView({ code, isStreaming = false }: CodeViewProps) {
   const [copied, setCopied] = useState(false);
+  const blockRef = useRef<HTMLPreElement>(null);
+
+  // 스트리밍 중에는 새로 생성되는 줄이 보이도록 아래로 따라간다
+  useEffect(() => {
+    if (isStreaming && blockRef.current) {
+      blockRef.current.scrollTop = blockRef.current.scrollHeight;
+    }
+  }, [code, isStreaming]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
@@ -17,12 +26,12 @@ export function CodeView({ code }: CodeViewProps) {
     <div className="code-panel">
       <div className="panel-header">
         <h3>코드</h3>
-        <button className="btn-copy" onClick={handleCopy}>
+        <button className="btn-copy" onClick={handleCopy} disabled={isStreaming}>
           {copied ? '복사됨!' : '복사'}
         </button>
       </div>
-      <pre className="code-block">
-        <code>{code}</code>
+      <pre className="code-block" ref={blockRef}>
+        <code>{code || (isStreaming ? '응답을 기다리는 중...' : '')}</code>
       </pre>
     </div>
   );

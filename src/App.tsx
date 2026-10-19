@@ -44,7 +44,7 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, generate, removeComponent, clearAll } =
+  const { components, streamingComponent, isLoading, error, generate, removeComponent, clearAll } =
     useComponentGenerator();
 
   useEffect(() => saveStored(API_KEYS_STORAGE_KEY, apiKeys), [apiKeys]);
@@ -165,10 +165,10 @@ function App() {
         )}
 
         <section className="results-section">
-          {components.length > 0 && (
+          {(components.length > 0 || streamingComponent) && (
             <div className="results-header">
               <h2>생성된 컴포넌트</h2>
-              <button className="btn-clear" onClick={clearAll}>
+              <button className="btn-clear" onClick={clearAll} disabled={isLoading}>
                 전체 삭제
               </button>
             </div>
@@ -196,24 +196,12 @@ function App() {
             </div>
           )}
 
-          {isLoading && (
-            <div className="win loading-card" role="status">
-              <div className="win-title" aria-hidden="true">
-                <span className="win-box" />
-                <span className="win-name">생성 중</span>
-              </div>
-              <div className="win-body">
-                <p>컴포넌트를 생성하고 있습니다...</p>
-                <div className="loading-bar" aria-hidden="true" />
-              </div>
-            </div>
-          )}
-
           <div className="results-grid">
-            {components.map((component) => (
+            {(streamingComponent ? [streamingComponent, ...components] : components).map((component) => (
               <ComponentCard
                 key={component.id}
                 component={component}
+                isStreaming={component.id === streamingComponent?.id}
                 onRemove={removeComponent}
                 onRegenerate={handleGenerate}
                 isLoading={isLoading}
