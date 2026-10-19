@@ -7,7 +7,7 @@ React 19 SPA. `/api/generate`로 받은 코드 문자열을 react-live로 렌더
 ## Tech Stack & Constraints
 
 - 미리보기는 react-live `noInline` (`components/LivePreview.tsx:14`). 생성 코드는 `render()` 호출로 마운트되므로 미리보기 방식을 인라인 모드로 바꾸지 않는다.
-- 컴포넌트 목록은 메모리 상태뿐이다 (`useComponentGenerator.ts:14`). 영속화가 필요하면 별도 요청 후 추가한다.
+- 컴포넌트 목록·프롬프트 히스토리(최대 20개)·provider·API 키는 localStorage(`rcg:*` 키)에 영속화된다. 읽기·쓰기·복원 로직은 `utils/storage.ts`(테스트 있음)에 둔다.
 - 새 컴포넌트는 목록 맨 앞에 추가된다 (`useComponentGenerator.ts:42`).
 
 ## Implementation Patterns
@@ -24,5 +24,5 @@ React 19 SPA. `/api/generate`로 받은 코드 문자열을 react-live로 렌더
 ## Local Golden Rules
 
 - 미리보기 영역(`.preview-render`)은 생성 코드의 inline style을 그대로 보여주는 곳이다. 테마 스타일(전역 `button`, `*` 규칙 등)이 생성 컴포넌트를 오염시키지 않도록 전역 요소 선택자를 추가하지 않는다. 클래스 선택자만 쓴다.
-- API 키는 입력값을 상태로만 들고 있고 provider 변경 시 비운다 (`App.tsx`의 `handleProviderChange`). 로컬스토리지 등에 저장하지 않는다.
+- API 키는 provider별로 따로 localStorage에 저장한다(`rcg:apiKeys`). 다른 제공사의 키가 전송되지 않도록 반드시 provider별로 분리해 보관한다.
 - `generate` 호출은 `apiKey`가 비어 있으면 필드를 보내지 않는다 (`useComponentGenerator.ts:26`). 서버가 환경변수 키를 쓰는 경로이므로 빈 문자열을 보내지 않는다.
