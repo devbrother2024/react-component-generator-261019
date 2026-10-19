@@ -3,6 +3,7 @@ import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import type { Provider } from './types';
+import { loadStored, saveStored, addPromptHistory } from './utils/storage';
 import './App.css';
 
 const PROVIDER_CONFIG = {
@@ -10,16 +11,45 @@ const PROVIDER_CONFIG = {
   google: { label: 'Google', placeholder: 'AIza...' },
 } as const;
 
+const PROVIDER_STORAGE_KEY = 'rcg:provider';
+const API_KEYS_STORAGE_KEY = 'rcg:apiKeys';
+const HISTORY_STORAGE_KEY = 'rcg:promptHistory';
+
+function loadProvider(): Provider {
+  const stored = loadStored<unknown>(PROVIDER_STORAGE_KEY, null);
+  return stored === 'anthropic' || stored === 'google' ? stored : 'google';
+}
+
+function loadApiKeys(): Record<Provider, string> {
+  const stored = loadStored<Partial<Record<Provider, unknown>>>(API_KEYS_STORAGE_KEY, {});
+  return {
+    anthropic: typeof stored?.anthropic === 'string' ? stored.anthropic : '',
+    google: typeof stored?.google === 'string' ? stored.google : '',
+  };
+}
+
+function loadHistory(): string[] {
+  const stored = loadStored<unknown>(HISTORY_STORAGE_KEY, []);
+  return Array.isArray(stored) ? stored.filter((p): p is string => typeof p === 'string') : [];
+}
+
 function App() {
-  const [apiKey, setApiKey] = useState('');
+  // 키는 provider별로 따로 보관해, 다른 제공사 키가 잘못 전송되지 않게 한다
+  const [apiKeys, setApiKeys] = useState<Record<Provider, string>>(loadApiKeys);
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = useState<Provider>('google');
+  const [provider, setProvider] = useState<Provider>(loadProvider);
+  const [history, setHistory] = useState<string[]>(loadHistory);
+  const apiKey = apiKeys[provider];
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
   });
   const { components, isLoading, error, generate, removeComponent, clearAll } =
     useComponentGenerator();
+
+  useEffect(() => saveStored(API_KEYS_STORAGE_KEY, apiKeys), [apiKeys]);
+  useEffect(() => saveStored(PROVIDER_STORAGE_KEY, provider), [provider]);
+  useEffect(() => saveStored(HISTORY_STORAGE_KEY, history), [history]);
 
   useEffect(() => {
     fetch('/api/config')
@@ -35,12 +65,12 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
+    setHistory((prev) => addPromptHistory(prev, prompt));
     generate(prompt, apiKey || undefined, provider);
   };
 
-  const handleProviderChange = (newProvider: Provider) => {
-    setProvider(newProvider);
-    setApiKey('');
+  const handleApiKeyChange = (value: string) => {
+    setApiKeys((prev) => ({ ...prev, [provider]: value }));
   };
 
   const activeProvider = PROVIDER_CONFIG[provider].label;
@@ -71,7 +101,7 @@ function App() {
               <span className="win-name">새 컴포넌트</span>
             </div>
             <div className="win-body">
-              <PromptInput onGenerate={handleGenerate} isLoading={isLoading} />
+              <PromptInput onGenerate={handleGenerate} isLoading={isLoading} history={history} />
             </div>
           </section>
 
@@ -86,7 +116,7 @@ function App() {
                 <select
                   id="provider"
                   value={provider}
-                  onChange={(e) => handleProviderChange(e.target.value as Provider)}
+                  onChange={(e) => setProvider(e.target.value as Provider)}
                 >
                   {Object.entries(PROVIDER_CONFIG).map(([key, { label }]) => (
                     <option key={key} value={key}>
@@ -102,7 +132,7 @@ function App() {
                     id="api-key"
                     type={showKey ? 'text' : 'password'}
                     value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
                     placeholder={
                       hasEnvKey
                         ? '서버 키 사용 중 (직접 입력으로 덮어쓰기 가능)'
