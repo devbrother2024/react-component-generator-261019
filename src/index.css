@@ -1,0 +1,63 @@
+/* Galmuri(갈무리) 픽셀 폰트 — 필요한 굵기만 번들한다. */
+@font-face {
+  font-family: Galmuri11;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../node_modules/galmuri/dist/Galmuri11.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Galmuri11;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../node_modules/galmuri/dist/Galmuri11-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Galmuri14;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../node_modules/galmuri/dist/Galmuri14.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: GalmuriMono11;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../node_modules/galmuri/dist/GalmuriMono11.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: auto;
+  -webkit-font-smoothing: auto;
+  --font-ui: Galmuri11, 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --font-display: Galmuri14, Galmuri11, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-code: GalmuriMono11, 'SF Mono', Consolas, monospace;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #000;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
