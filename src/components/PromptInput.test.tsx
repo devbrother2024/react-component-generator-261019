@@ -26,4 +26,29 @@ describe('PromptInput', () => {
     render(<PromptInput onGenerate={vi.fn()} isLoading={true} />);
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled();
   });
+  it('입력한 글자 수를 "n/500" 형태로 보여준다', async () => {
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
+    await user.type(screen.getByRole('textbox'), '카드');
+    expect(screen.getByText('2/500')).toBeInTheDocument();
+  });
+
+  it('500자를 넘으면 오류 메시지를 보여주고 생성 버튼이 비활성이다', async () => {
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
+    await user.click(screen.getByRole('textbox'));
+    await user.paste('가'.repeat(501));
+    expect(screen.getByRole('alert')).toHaveTextContent('프롬프트는 500자까지 입력할 수 있어요.');
+    expect(screen.getByRole('button', { name: '컴포넌트 생성' })).toBeDisabled();
+  });
+
+  it('500자를 넘은 상태에서 Cmd+Enter를 눌러도 onGenerate가 호출되지 않는다', async () => {
+    const onGenerate = vi.fn();
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={onGenerate} isLoading={false} />);
+    await user.click(screen.getByRole('textbox'));
+    await user.paste('가'.repeat(501));
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+    expect(onGenerate).not.toHaveBeenCalled();
+  });
 });
